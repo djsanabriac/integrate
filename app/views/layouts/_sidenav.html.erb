@@ -1,0 +1,23 @@
+
+<md-sidenav class="md-sidenav-left" md-component-id="left"
+          md-disable-backdrop md-whiteframe="4">
+
+  <md-toolbar class="md-theme-indigo">
+    <h1 class="md-toolbar-tools">Calendarios</h1>
+  </md-toolbar>
+
+  <md-content layout-margin>
+     <md-list>
+      <md-list-item class="md-3-line" ng-repeat="item in calendar_list.items" ng-click="setEvents(item.id)">
+        <div class="md-list-item-text">
+          <h3>{{item.summary}}</h3>
+        </div>
+      </md-list-item>
+      <md-divider ng-if="!$last"/>
+    </md-list>
+    <md-button ng-click="toggleLeft()" class="md-accent">
+      Cerrar panel
+    </md-button>
+  </md-content>
+
+</md-sidenav>

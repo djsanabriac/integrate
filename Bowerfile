@@ -1,0 +1,5 @@
+asset 'angular'
+asset 'bootstrap'
+asset 'angular-material'
+asset 'material-icons'
+asset 'material-calendar'

@@ -1,0 +1,36 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Integrate Google</title>
+    
+    <%= include_gon %>
+    <%= csrf_meta_tags %>
+
+    <!-- Material icons font hosted by Google -->
+		<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAmmdkoQGbzFtx2yjl3B7s5AYxlGPFhTmc">
+    </script>
+
+    <%= stylesheet_link_tag    'application', media: 'all' %>
+    <%= javascript_include_tag 'application' %>
+  </head>
+
+  <body ng-app="angularIntegration" flex layout-fill>
+  	<div ng-controller="mainCtrl" flex layout-fill >
+    <section layout="column" flex layout-fill>
+      <%= render "layouts/header-bar" %>
+      
+      <md-content layout-fill>
+        <% if @current_user %>
+          <%= render "layouts/sidenav", {locales: @calendar_list} %>
+        <% end %>
+        <%= yield %>
+      </md-content>
+    </section>
+      
+    </div>
+
+	</body>
+</html>

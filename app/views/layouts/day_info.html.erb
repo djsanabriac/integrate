@@ -1,0 +1,25 @@
+<md-toolbar>
+  <div class="md-toolbar-tools">
+    <h2>Eventos para {{ date }}, {{ sc }}</h2>
+    <span flex></span>
+  </div>
+</md-toolbar>
+
+<div>
+	<md-list >
+    <md-list-item class="md-3-line" ng-repeat=" event in day_events " layout="column">
+      <div class="md-list-item-text">
+        <h2>{{event.summary}}</h2>
+        <span class="md-subheader"> Creado por: {{event.creator.displayName}} </span>
+        <span ng-if="event.location"> {{ event.location }} </span>
+        <span class="md-subheader" ng-if="!event.location"> (Sin lugar para mostrar) </span>
+        <span ng-if="event.start.dateTime">{{ event.start.dateTime | date:"h:mma" }} </span>
+        <span ng-if="event.location">
+        	<md-button ng-click="showMap( $index, event.location )">Mostrar mapa</md-button>
+        	<div id="map-{{ $index }}"></div>
+        </span>
+      </div>
+    </md-list-item>
+    <md-divider ng-if="!$last"/>
+	</md-list>
+</div>

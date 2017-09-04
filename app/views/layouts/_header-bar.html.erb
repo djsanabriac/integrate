@@ -1,0 +1,17 @@
+  <md-toolbar  class=" whiteframe-md-2 md-hue-2">
+    <div class="md-toolbar-tools">
+      <md-button class="md-icon-button" aria-label="Settings" ng-click="toggleLeft()">
+        <md-icon>menu</md-icon>
+      </md-button>
+
+      <h2 flex md-truncate>Integrate Google</h2>
+
+      <% if @current_user %>
+        <%= @current_user.display_name  %>
+        <img ng-src="<%=@current_user.image.url%> " class='md-avatar' />
+      <% else %>
+        <md-button ng-click="doLogin()">Iniciar sesión</md-button>
+      <% end %>
+
+    </div>
+  </md-toolbar>

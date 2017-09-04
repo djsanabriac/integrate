@@ -1,0 +1,228 @@
+var app = angular.module('angularIntegration', ['ngMaterial', "materialCalendar"]);
+
+app.controller('mainCtrl', ['$scope', '$location', '$mdSidenav', '$http', '$filter', '$mdDialog', 'MaterialCalendarData', 
+    function ($scope, $location, $mdSidenav, $http, $filter, $mdDialog,MaterialCalendarData){
+    	
+        $scope.doLogin = function () {
+    		window.location = "../redirect"
+    	}
+
+        $scope.selected_calendar;
+
+    	$scope.toggleLeft = buildToggler('left');
+        $scope.toggleRight = buildToggler('right');
+
+        function buildToggler(componentId) {
+          return function() {
+            $mdSidenav(componentId).toggle();
+          };
+        }
+
+        //--------------------------------------------------------------------------
+        if ( typeof gon !== 'undefined' ) {
+            $scope.calendar_list = gon.calendar_list;
+        }
+
+        $scope.events = {};
+
+        $scope.dayFormat = "d";
+
+        $scope.setDate = function () {
+            return new Date().getMonth();
+        };
+
+        // To select a single date, make sure the ngModel is not an array.
+        $scope.selectedDate = null;
+
+        $scope.firstDayOfWeek = 0; // First day of the week, 0 for Sunday, 1 for Monday, etc.
+        $scope.setDirection = function(direction) {
+          $scope.direction = direction;
+          $scope.dayFormat = direction === "vertical" ? "EEEE, MMMM d" : "d";
+        };
+
+        $scope.dayClick = function(date) {
+
+            var day_events = [];
+
+            if ( typeof($scope.events.items) != "undefined" ) {
+                day_events = $scope.events.items.filter(function( e ) {
+                    if ( typeof(e.start.date) != "undefined" ) {
+                        var day = new Date(e.start.date);
+                        day.setDate( day.getDate() + 1 )
+                        return new Date(day).toDateString() == date.toDateString();
+                    } else if ( typeof(e.start.dateTime) != "undefined" ) {
+                        return new Date(e.start.dateTime).toDateString() == date.toDateString();
+                    }
+                    return false;
+                });
+            }
+
+            $mdDialog.show({
+                controller: DialogController,
+                templateUrl: '/day_info',
+                parent: angular.element(document.body),
+                locals:{
+                    sc : $scope.selected_calendar,
+                    date : new Date(date).toDateString(),
+                    day_events : day_events
+                },
+                clickOutsideToClose:true,
+                fullscreen: $scope.customFullscreen // Only for -xs, -sm breakpoints.
+            })
+            .then(function(answer) {
+                $scope.status = 'You said the information was "' + answer + '".';
+            }, function() {
+                $scope.status = 'You cancelled the dialog.';
+            });
+
+            function DialogController($scope, $mdDialog, sc, date, day_events) {
+
+                $scope.sc = sc;
+                $scope.date = date;
+                $scope.day_events = day_events;
+
+                console.log(day_events)
+
+                $scope.showMap = function( index, location ){
+
+                    geocoder = new google.maps.Geocoder();
+
+                    var myOptions = {
+                        zoom: 14,
+                        center: new google.maps.LatLng(0.0, 0.0),
+                        mapTypeId: google.maps.MapTypeId.ROADMAP
+                    }
+
+                    var div = document.getElementById("map-" + index);
+                    div.setAttribute( "style", "height: 450px; width: 90%");
+
+                    map = new google.maps.Map( div, myOptions);
+
+                    // Call the codeAddress function (once) when the map is idle (ready)
+                    google.maps.event.addListenerOnce(map, 'idle', function() {
+                        codeAddress(location);
+                    });
+
+                    function codeAddress(location) {
+
+                        // Define address to center map to
+                        var address = location;
+
+                        geocoder.geocode({
+                            'address': address
+                        }, function (results, status) {
+
+                            if (status == google.maps.GeocoderStatus.OK) {
+
+                                // Center map on location
+                                map.setCenter(results[0].geometry.location);
+
+                                // Add marker on location
+                                var marker = new google.maps.Marker({
+                                    map: map,
+                                    position: results[0].geometry.location
+                                });
+
+                            } else {
+
+                                alert("Geocode was not successful for the following reason: " + status);
+                            }
+                        });
+                    }
+
+                };
+
+                $scope.hide = function() {
+                  $mdDialog.hide();
+                };
+
+                $scope.cancel = function() {
+                  $mdDialog.cancel();
+                };
+
+                $scope.answer = function(answer) {
+                  $mdDialog.hide(answer);
+                };
+            }
+        };
+
+        $scope.prevMonth = function(data) {
+          $scope.msg = "You clicked (prev) month " + data.month + ", " + data.year;
+        };
+
+        $scope.nextMonth = function(data) {
+          $scope.msg = "You clicked (next) month " + data.month + ", " + data.year;
+        };
+
+        $scope.tooltips = true;
+        $scope.setDayContent = function(date, content) {
+
+            if (typeof content != 'undefined') {
+                console.log( content );
+                return content.summary;
+            }
+
+        };
+
+        $scope.setEvents = function (id) {
+            $scope.selected_calendar = id;
+            $http.get(location.origin + '/events/' + id)
+                .then(function(value) {
+                    $scope.events = value.data;
+                },function(reason) { console.log(reason) });
+        }
+
+        $scope.$watch('events',function(newValue, oldValue, scope) {
+            angular.forEach( newValue.items , function( value, key) {
+
+                var day;
+
+                if ( typeof(value.start.date) != "undefined" ) {
+                    day = new Date(value.start.date);
+                    day.setDate( day.getDate() + 1 )
+                } else if ( typeof(value.start.dateTime) != "undefined" ) {
+                    day = new Date(value.start.dateTime)
+                }
+
+                var day_evs = MaterialCalendarData.data[MaterialCalendarData.getDayKey(day)]
+                if ( typeof( day_evs ) != "undefined" ) {
+                    MaterialCalendarData.setDayContent( day, day_evs += "\n" + value.summary);
+                } else {
+                    MaterialCalendarData.setDayContent( day, value.summary);
+                }
+
+            } );  
+        });
+
+        $scope.showInitDialog = function (ev) {
+            $mdDialog.show({
+                  controller: DialogController,
+                  templateUrl: '/user_manual',
+                  parent: angular.element(document.body),
+                  targetEvent: ev,
+                  clickOutsideToClose: true,
+                  fullscreen: $scope.customFullscreen
+                }).then(function(answer) {
+                  $scope.status = 'You said the information was "' + answer + '".';
+                }, function() {
+                  $scope.status = 'You cancelled the dialog.';
+                });
+
+            function DialogController($scope, $mdDialog) {
+                $scope.hide = function() {
+                  $mdDialog.hide();
+                };
+
+                $scope.cancel = function() {
+                  $mdDialog.cancel();
+                };
+
+                $scope.answer = function(answer) {
+                  $mdDialog.hide(answer);
+                };
+            };
+        }
+
+        console.log($location)
+        $scope.showInitDialog();
+}]);
